@@ -1,0 +1,8 @@
+openai>=1.0.0
+numpy
+yfinance
+feedparser
+requests
+beautifulsoup4
+flask
+filelock

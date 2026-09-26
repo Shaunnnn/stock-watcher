@@ -1,0 +1,42 @@
+[
+  {
+    "ticker": "AAPL",
+    "name": "Apple Inc.",
+    "aliases": [
+      "apple"
+    ]
+  },
+  {
+    "ticker": "MSFT",
+    "name": "Microsoft Corporation",
+    "aliases": [
+      "microsoft"
+    ]
+  },
+  {
+    "ticker": "TSLA",
+    "name": "Tesla, Inc.",
+    "aliases": [
+      "tesla"
+    ]
+  },
+  {
+    "ticker": "NVDA",
+    "name": "NVIDIA Corporation",
+    "aliases": [
+      "nvidia"
+    ]
+  },
+  {
+    "ticker": "AMZN",
+    "name": "Amazon.com, Inc.",
+    "aliases": [
+      "amazon"
+    ]
+  },
+  {
+    "ticker": "QQQM",
+    "name": "QQQM",
+    "aliases": []
+  }
+]

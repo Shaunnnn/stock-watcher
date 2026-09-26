@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Generated data — regenerate locally with the fetch/index scripts,
+# don't commit scraped news/filings or your local price history
+price_log.json
+news_cache.json
+filings_cache.json
+embeddings_cache.json
+
+# Environment / secrets
+.env
+
+# OS
+.DS_Store

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STOCK WATCHER // terminal</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="scanlines"></div>
+
+<div id="ticker-tape" class="ticker-tape">
+  <div class="ticker-track" id="ticker-track">
+    <span class="ticker-loading">LOADING WATCHLIST…</span>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <header class="hdr">
+    <div class="hdr-left">
+      <h1 class="logo">STOCK<span class="logo-accent">WATCHER</span></h1>
+      <p class="subtitle">live price · news RAG · 10-K RAG</p>
+    </div>
+    <div class="hdr-right">
+      <div class="status-line">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="status-text">checking index…</span>
+      </div>
+      <button id="refresh-btn" class="btn-refresh">
+        <span class="btn-icon">&#8635;</span> REFRESH PRICES
+      </button>
+    </div>
+  </header>
+
+  <section class="watchlist-manager">
+    <form id="add-form" class="add-form" autocomplete="off">
+      <span class="prompt-caret">&gt;</span>
+      <input id="add-ticker" type="text" placeholder="TICKER (e.g. GOOGL)" maxlength="10">
+      <input id="add-name" type="text" placeholder="Company name (optional)" maxlength="80">
+      <button type="submit" class="btn-add" id="add-btn">+ ADD</button>
+    </form>
+    <div class="add-status" id="add-status"></div>
+  </section>
+
+  <section class="cards" id="cards">
+    {% for entry in watchlist %}
+    <article class="card" data-ticker="{{ entry.ticker }}">
+      <div class="card-top">
+        <span class="ticker-sym">{{ entry.ticker }}</span>
+        <span class="alert-flag" data-role="alert" hidden>&#9650; ALERT</span>
+      </div>
+      <div class="card-name">{{ entry.name }}</div>
+      <div class="card-price" data-role="price">—</div>
+      <div class="card-change" data-role="change">no data yet</div>
+      <svg class="sparkline" data-role="sparkline" viewBox="0 0 100 28" preserveAspectRatio="none"></svg>
+      <div class="card-bottom">
+        <span class="card-updated" data-role="updated"></span>
+        <button class="btn-remove" data-role="remove" data-ticker="{{ entry.ticker }}">REMOVE</button>
+      </div>
+    </article>
+    {% endfor %}
+  </section>
+
+  <section class="terminal-panel">
+    <div class="terminal-header">
+      <span class="terminal-title">&gt;_ ASK THE WATCHER</span>
+      <span class="terminal-hint">grounded in retrieved news + 10-K excerpts, not general knowledge</span>
+    </div>
+
+    <div class="terminal-log" id="terminal-log">
+      <div class="log-entry log-system">
+        Welcome. Ask about any ticker in the watchlist — e.g.
+        <em>"why did NVDA move this week?"</em> or
+        <em>"what risks does Tesla flag in its 10-K?"</em>
+      </div>
+    </div>
+
+    <form id="ask-form" class="ask-form" autocomplete="off">
+      <span class="prompt-caret">&gt;</span>
+      <input
+        id="ask-input"
+        type="text"
+        placeholder="ask about your watchlist…"
+        maxlength="300"
+      >
+      <button type="submit" class="btn-ask">ASK</button>
+    </form>
+  </section>
+
+  <footer class="footnote">
+    Informational only — not financial advice. Answers are grounded strictly in
+    retrieved news and filing text, and the model is told to say so when the
+    context isn't enough.
+  </footer>
+
+</main>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
