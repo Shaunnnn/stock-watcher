@@ -17,6 +17,12 @@ filings — and it tells you which kind of source it used.
 Watchlist: **AAPL** (Apple), **MSFT** (Microsoft), **TSLA** (Tesla),
 **NVDA** (NVIDIA), **AMZN** (Amazon) — edit `watchlist.json` to change it.
 
+## Screenshots
+
+| Dashboard | Ask the Watcher |
+|---|---|
+| ![Stock Watcher dashboard — live prices and alert flags](docs/screenshots/dashboard.jpg) | ![Ask the Watcher chat panel, grounded in retrieved news and 10-K excerpts](docs/screenshots/chat.jpg) |
+
 ## How it works
 
 | File | What it does |
