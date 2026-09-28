@@ -1,0 +1,8 @@
+# Copy this to terraform.tfvars (already gitignored) and fill in your own
+# values — never commit real secrets.
+aws_region       = "us-east-1"
+edgar_user_agent = "Your Name your.email@example.com"
+# openai_api_key and app_password are marked sensitive — better set via
+# environment variables instead of a file:
+#   export TF_VAR_openai_api_key="sk-..."
+#   export TF_VAR_app_password="..."

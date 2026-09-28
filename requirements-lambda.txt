@@ -1,0 +1,5 @@
+# Extra dependencies only needed for the Lambda/container deployment —
+# kept separate from requirements.txt so local dev installs stay light
+# and don't need boto3/gunicorn at all.
+gunicorn==22.0.0
+boto3==1.34.144

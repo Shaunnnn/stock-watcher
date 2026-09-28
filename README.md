@@ -192,6 +192,97 @@ on first:
 None of this is needed for running it locally, which is the intended
 use here.
 
+### Serverless deploy (AWS Lambda, container image)
+
+This repo includes a ready-to-use serverless deployment: Docker +
+Terraform + a GitHub Actions pipeline, targeting AWS Lambda behind a
+public Function URL — no servers to patch or pay for while idle.
+
+**Architecture**
+
+- The exact same Flask app, run by gunicorn inside a container, fronted
+  by the [AWS Lambda Web Adapter](https://github.com/awslabs/aws-lambda-web-adapter)
+  (a Lambda extension that translates Function URL requests into normal
+  HTTP calls) — so nothing in `app.py` had to change for Lambda.
+- `watchlist.json`, `price_log.json`, `news_cache.json`, and
+  `filings_cache.json` move to DynamoDB (one item each); `embeddings_cache.json`
+  moves to S3 (a few MB — over DynamoDB's 400KB item limit). See
+  `storage.py` — it's a drop-in swap: local files when run normally,
+  DynamoDB/S3 when `AWS_LAMBDA_FUNCTION_NAME` is set. Local development
+  is completely unaffected.
+- Terraform (`terraform/`) owns the infrastructure: ECR repo, Lambda
+  function + Function URL, DynamoDB table, S3 bucket, IAM roles,
+  CloudWatch log group, and a GitHub OIDC role so CI can deploy without
+  a stored AWS access key.
+- `.github/workflows/deploy.yml` owns the app: on every push to `main`
+  it runs the test suite, then (if tests pass) builds the image, pushes
+  it to ECR, and points the Lambda function at the new image.
+
+**Staying free.** Lambda's always-free tier (1M requests + 400,000
+GB-seconds/month, no expiration) comfortably covers personal-project
+traffic. The Function URL has no separate charge (unlike putting API
+Gateway or a load balancer in front). DynamoDB is provisioned at 5
+read/write capacity units, inside its always-free 25/25 allowance. The
+only non-$0 pieces are ECR image storage and the S3 objects — a few
+cents a month at most for this project's size — plus your own OpenAI
+usage, same as running it locally.
+
+**One-time setup, in order:**
+
+```bash
+# 1. AWS account + CLI, if you don't have them already
+aws configure
+# set a billing alarm now — https://console.aws.amazon.com/billing/home#/budgets
+
+# 2. Terraform: create everything except the Lambda function's real code
+cd terraform
+cp terraform.tfvars.example terraform.tfvars   # fill in edgar_user_agent, aws_region, github_repo
+export TF_VAR_openai_api_key="sk-..."          # never put this in a file
+export TF_VAR_app_password="something-private" # optional — leave unset for a fully public demo
+terraform init
+terraform apply
+
+# 3. GitHub: add these repo secrets (Settings -> Secrets and variables -> Actions)
+#      AWS_ROLE_ARN         <- terraform output github_actions_role_arn
+#      AWS_REGION           <- same region you used above
+#      ECR_REPOSITORY_NAME  <- terraform output ecr_repository_url (just the repo name part)
+#      LAMBDA_FUNCTION_NAME <- terraform output lambda_function_name
+
+# 4. Push to main — GitHub Actions builds the image, pushes it, and
+#    updates the Lambda function. First run takes a few minutes.
+git push
+
+# 5. Seed real data into DynamoDB/S3 (otherwise the live app starts empty)
+export DYNAMODB_TABLE=$(terraform output -raw dynamodb_table_name)
+export S3_BUCKET=$(terraform output -raw s3_bucket_name)
+cd ..
+python3 seed_cloud_storage.py
+
+# 6. Open it
+terraform -chdir=terraform output function_url
+```
+
+Before any of this, build and run the container locally at least once —
+this sandbox this project was developed in has no Docker daemon, so the
+image itself has only been reviewed, not build-tested:
+
+```bash
+docker build -t stock-watcher .
+docker run -p 8000:8000   -e OPENAI_API_KEY="sk-..."   -e EDGAR_USER_AGENT="Your Name your.email@example.com"   stock-watcher
+curl http://localhost:8000/api/status
+```
+
+That runs it in local-file mode (no `AWS_LAMBDA_FUNCTION_NAME` set), so
+it's a check that the image itself is sound before layering Lambda on
+top.
+
+**Known limitation:** the file-lock concurrency guard (see *Concurrency
+& cost safety* above) only protects requests landing in the same warm
+Lambda execution environment, not across Lambda's separate concurrent
+instances — a DynamoDB-backed distributed lock would close that gap, but
+wasn't worth the extra complexity for a low-traffic personal demo. Worth
+knowing about, not worth losing sleep over at this scale.
+
 ## Example
 
 ```

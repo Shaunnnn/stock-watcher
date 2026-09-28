@@ -1,0 +1,17 @@
+venv/
+__pycache__/
+*.pyc
+.git/
+.gitignore
+.vscode/
+tests/
+docs/
+data.lock
+# Local JSON caches aren't baked into the image — the live deployment
+# reads/writes these through DynamoDB/S3 instead (see storage.py). Seed
+# them with seed_cloud_storage.py after the first deploy.
+watchlist.json
+price_log.json
+news_cache.json
+filings_cache.json
+embeddings_cache.json

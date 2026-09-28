@@ -24,10 +24,12 @@ Each turn:
      (generation)
   5. Prints the answer and which sources it used, labeled by type
 """
-import json
 import os
+
 import numpy as np
 from openai import OpenAI
+
+import storage
 
 client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
@@ -40,13 +42,11 @@ TOP_K = 5  # a bit higher now that results can come from two source types
 
 
 def load_watchlist():
-    with open(WATCHLIST_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+    return storage.load_json(WATCHLIST_FILE, default=[])
 
 
 def load_index():
-    with open(EMBEDDINGS_FILE, "r", encoding="utf-8") as f:
-        docs = json.load(f)
+    docs = storage.load_json(EMBEDDINGS_FILE, default=[])
     embeddings = np.array([d["embedding"] for d in docs])
     return docs, embeddings
 
@@ -55,10 +55,7 @@ def load_latest_prices():
     """Collapse price_log.json (a running history) down to the most recent
     snapshot per ticker. Returns {} if no log exists yet — that's fine,
     the bot just won't have live price context."""
-    if not os.path.exists(PRICE_LOG_FILE):
-        return {}
-    with open(PRICE_LOG_FILE, "r", encoding="utf-8") as f:
-        log = json.load(f)
+    log = storage.load_json(PRICE_LOG_FILE, default=[])
     latest = {}
     for snapshot in log:
         latest[snapshot["ticker"]] = snapshot  # later entries overwrite earlier

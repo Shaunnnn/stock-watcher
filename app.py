@@ -31,7 +31,6 @@ Run:
     python3 app.py
 Then open http://127.0.0.1:5000
 """
-import json
 import os
 import threading
 import time
@@ -46,10 +45,16 @@ import filings_fetch
 import news_fetch
 import price_watcher
 import rag_chat
+import storage
 
 app = Flask(__name__)
 
-DATA_LOCK_FILE = "data.lock"
+# Locally this is a real cross-process lock file. In Lambda the deployment
+# package itself is read-only, so the lock file has to live in /tmp — and
+# note it only protects against concurrent requests landing in the SAME
+# warm execution environment, not across Lambda's separate concurrent
+# instances. Fine for a low-traffic personal dashboard; see README.
+DATA_LOCK_FILE = "/tmp/data.lock" if storage.IS_LAMBDA else "data.lock"
 DATA_LOCK_TIMEOUT_SECONDS = 20
 
 
@@ -105,19 +110,15 @@ def check_auth():
 
 
 def embeddings_ready():
-    return os.path.exists(rag_chat.EMBEDDINGS_FILE)
+    return storage.exists(rag_chat.EMBEDDINGS_FILE)
 
 
 def load_json_list(path):
-    if not os.path.exists(path):
-        return []
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    return storage.load_json(path, default=[])
 
 
 def save_json_list(path, data):
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
+    storage.save_json(path, data)
 
 
 def derive_alias(name, ticker):

@@ -11,11 +11,11 @@ scheduled task to run every N minutes:
 
     python3 price_watcher.py
 """
-import json
-import os
 from datetime import datetime, timezone
 
 import yfinance as yf
+
+import storage
 
 WATCHLIST_FILE = "watchlist.json"
 PRICE_LOG_FILE = "price_log.json"
@@ -24,15 +24,11 @@ MAX_HISTORY_PER_TICKER = 500  # price_log.json would otherwise grow forever
 
 
 def load_watchlist():
-    with open(WATCHLIST_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+    return storage.load_json(WATCHLIST_FILE, default=[])
 
 
 def load_price_log():
-    if not os.path.exists(PRICE_LOG_FILE):
-        return []
-    with open(PRICE_LOG_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+    return storage.load_json(PRICE_LOG_FILE, default=[])
 
 
 def prune_log(log, max_per_ticker=MAX_HISTORY_PER_TICKER):
@@ -55,8 +51,7 @@ def prune_log(log, max_per_ticker=MAX_HISTORY_PER_TICKER):
 
 def save_price_log(log):
     log = prune_log(log)
-    with open(PRICE_LOG_FILE, "w", encoding="utf-8") as f:
-        json.dump(log, f, indent=2)
+    storage.save_json(PRICE_LOG_FILE, log)
 
 
 def compute_pct_change(price, prev_close):
