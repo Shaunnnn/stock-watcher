@@ -314,9 +314,7 @@ been climbing after delivery numbers beat estimates. (Not financial advice.)
 - **This is informational, not financial advice** — the prompt explicitly
   tells the model not to recommend buying or selling, and to say so if the
   context isn't enough to answer confidently.
-- **Use a fresh OpenAI API key**, not the one that leaked in your NutriBot
-  hackathon project's server logs earlier — rotate that old key if you
-  haven't already.
+- **Use a fresh OpenAI API key**, not any other key that had been used in other projects.
 - Google News RSS and Yahoo Finance occasionally rate-limit or change
   their response format without warning, since neither is an official,
   stable API. SEC EDGAR is an official API but is strict about the
