@@ -164,3 +164,26 @@ resource "aws_lambda_function_url" "app" {
   function_name      = aws_lambda_function.app.function_name
   authorization_type = "NONE"
 }
+
+# authorization_type = NONE on the Function URL above only means AWS
+# does not require a SigV4-signed request — it does NOT by itself grant
+# public invoke access. Lambda still needs this separate resource-based
+# permission explicitly allowing anyone to call it, or every request
+# gets a 403 Forbidden regardless of the auth type setting.
+resource "aws_lambda_permission" "public_url" {
+  statement_id           = "AllowPublicFunctionUrlInvoke"
+  action                 = "lambda:InvokeFunctionUrl"
+  function_name          = aws_lambda_function.app.function_name
+  principal               = "*"
+  function_url_auth_type = "NONE"
+}
+
+# Since late 2025, new Function URLs also need lambda:InvokeFunction
+# (granted to everyone, scoped to calls made via the Function URL).
+resource "aws_lambda_permission" "public_url_invoke" {
+  statement_id             = "AllowPublicInvokeViaFunctionUrl"
+  action                   = "lambda:InvokeFunction"
+  function_name            = aws_lambda_function.app.function_name
+  principal                = "*"
+  invoked_via_function_url = true
+}

@@ -12,7 +12,16 @@ resource "aws_iam_openid_connect_provider" "github" {
   # GitHub's OIDC root CA thumbprint (documented by GitHub/AWS; the
   # provider itself validates the cert chain, this is a legacy required
   # field the AWS provider still expects).
-  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
+  # GitHub has rotated the intermediate CA behind this endpoint before,
+  # which silently breaks an OIDC provider pinned to only the old
+  # thumbprint (AssumeRoleWithWebIdentity then fails with a generic
+  # 'not authorized' error even though the trust policy is correct).
+  # Both currently-valid thumbprints are listed so a future rotation
+  # doesn't break this again.
+  thumbprint_list = [
+    "6938fd4d98bab03faadb97b34396831e3780aea1",
+    "1c58a3a8518e8759bf075b76b750d4f2df264fcd",
+  ]
 }
 
 resource "aws_iam_role" "github_actions" {
@@ -29,7 +38,15 @@ resource "aws_iam_role" "github_actions" {
           "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
         }
         StringLike = {
-          "token.actions.githubusercontent.com:sub" = "repo:${var.github_repo}:ref:refs/heads/main"
+          # GitHub started issuing an "immutable subject claim" for repos
+          # created after 2026-07-15 — repo:owner@ownerID/repo@repoID:...
+          # instead of the classic name-only repo:owner/repo:... — and
+          # there's no way to tell which format a given repo uses without
+          # trying it, so both are accepted here.
+          "token.actions.githubusercontent.com:sub" = [
+            "repo:${var.github_repo}:ref:refs/heads/main",
+            "repo:${split("/", var.github_repo)[0]}@*/${split("/", var.github_repo)[1]}@*:ref:refs/heads/main",
+          ]
         }
       }
     }]
