@@ -17,6 +17,10 @@ filings — and it tells you which kind of source it used.
 Watchlist: **AAPL** (Apple), **MSFT** (Microsoft), **TSLA** (Tesla),
 **NVDA** (NVIDIA), **AMZN** (Amazon) — edit `watchlist.json` to change it.
 
+**Live demo:** https://4nkzftyl454w3cxwcbpkjq3wie0rhvuj.lambda-url.us-east-1.on.aws/
+(serverless on AWS Lambda — the first request after idle may take a few
+seconds to warm up).
+
 ## Screenshots
 
 | Dashboard | Ask the Watcher |
@@ -214,6 +218,12 @@ public Function URL — no servers to patch or pay for while idle.
   function + Function URL, DynamoDB table, S3 bucket, IAM roles,
   CloudWatch log group, and a GitHub OIDC role so CI can deploy without
   a stored AWS access key.
+- A Function URL with `authorization_type = "NONE"` is not public by
+  itself: Lambda also needs resource-based permissions allowing everyone
+  to call it, or every request returns `403 Forbidden`. Terraform grants
+  both `lambda:InvokeFunctionUrl` and `lambda:InvokeFunction` (the latter
+  scoped to calls made via the Function URL), which newer AWS accounts
+  require together.
 - `.github/workflows/deploy.yml` owns the app: on every push to `main`
   it runs the test suite, then (if tests pass) builds the image, pushes
   it to ECR, and points the Lambda function at the new image.
